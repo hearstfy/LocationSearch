@@ -31,7 +31,6 @@ namespace LocationSearch.Api
                 options.UseMySql(mysqlSettings.ConnectionString, new MySqlServerVersion(new Version(8, 0, 26)));
             });
             services.AddScoped<ILocationService, LocationService>();
-            services.AddSingleton<IMemoryCache, MemoryCache>();
             services.AddLazyCache();
         }
 

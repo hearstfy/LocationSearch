@@ -1,6 +1,6 @@
 # General
   - Has to parts; LocationSearch.Api contains application and LocationSearch.UnitTests contain unit tests.
-  - Requires MySQL with DB named roamler, table named Locations and data in it.
+  - Requires MySQL with DB named roamler, table named Locations [Address(string,text,nvarchar), Latitude(decimal(10,8), Longitude(decimal(11,8)] and data in it.
 
 # LocationSearch.Api
   - LocationController: Straigthforward controller that gets request body, passes it to service and returns the result.

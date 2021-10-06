@@ -1,6 +1,23 @@
-# How to start the app
- - cd LocationSearch.Api/docker 
- - docker-compose up
+# How to Run
+ - Run below commands on root folder;
+
+```bash
+   cd LocationSearch.Api/docker 
+   docker-compose up
+```
+
+# How to Use
+ - Send HTTP Post command to localhost:5000/locations with below data model:
+    
+  ```json
+
+   {
+      "latitude": "double (decimal(10,8))",
+      "longitude": "double (decimal(11,8))",
+      "maxDistance": "double",
+      "maxResults": "int"
+  }
+ ```
 
 # General
   - Has two parts; LocationSearch.Api contains application and LocationSearch.UnitTests contain unit tests.

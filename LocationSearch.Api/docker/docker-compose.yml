@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  locationsearch:
+    build:
+      context: ./../
+      dockerfile: docker/Dockerfile
+    ports: 
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - MySqlSettings:Database=roamler
+      - MySqlSettings:Host=mysql
+      - MySqlSettings:Password=root
+      - MySqlSettings:User=root
+      - MySqlSettings:Port=3306
+    restart: on-failure
+    networks:
+      - location_search
+
+  mysql:
+    image: mysql:8.0.26
+    environment:
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=roamler
+    restart: on-failure
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-files:/var/lib/mysql-files
+      - ./mysql-init-files:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    command: "--local-infile=1 --secure_file_priv=/var/lib/mysql-files"
+    networks:
+      - location_search
+
+networks:
+  location_search:
+    name: location_search
+    driver: bridge

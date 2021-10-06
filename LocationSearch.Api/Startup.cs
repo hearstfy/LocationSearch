@@ -25,7 +25,8 @@ namespace LocationSearch.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-                        
+            services.Configure<DefaultSettings>(Configuration.GetSection("DefaultSettings"));     
+            
             var mysqlSettings = Configuration.GetSection(nameof(MySqlSettings)).Get<MySqlSettings>();
             services.AddDbContext<LocationDataContext>(options => {
                 options.UseMySql(mysqlSettings.ConnectionString, new MySqlServerVersion(new Version(8, 0, 26)));
@@ -41,8 +42,6 @@ namespace LocationSearch.Api
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseRouting();
 

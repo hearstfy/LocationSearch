@@ -2,8 +2,9 @@
 using LocationSearch.Api.DataAccess;
 using LocationSearch.Api.Dtos;
 using LocationSearch.Api.Models;
+using LocationSearch.Api.Settings;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +15,12 @@ namespace LocationSearch.Api.Services
     public class LocationService : ILocationService
     {
         private readonly LocationDataContext context;
-        private readonly IConfiguration configuration;
+        private readonly DefaultSettings defaultSettings;
         private readonly IAppCache memoryCache;
-        public LocationService(LocationDataContext context, IConfiguration configuration, IAppCache memoryCache)
+        public LocationService(LocationDataContext context, IOptionsSnapshot<DefaultSettings> defaultSettings, IAppCache memoryCache)
         {
             this.context = context;
-            this.configuration = configuration;
+            this.defaultSettings = defaultSettings.Value;
             this.memoryCache = memoryCache;
 
         }
@@ -43,8 +44,8 @@ namespace LocationSearch.Api.Services
         {
             Location location = new() { Address = "", Latitude = (double)locationDto.Latitude, Longitude = (double)locationDto.Longitude };
             int offset = 0;
-            int limit = int.Parse(configuration["DefaultValues:chunkSize"].ToString());
-            int maximumNumberOfResults = locationDto.MaxResults ?? int.Parse(configuration["DefaultValues:maximumNumberOfResults"].ToString());
+            int limit = defaultSettings.ChunkSize;
+            int maximumNumberOfResults = locationDto.MaxResults ?? defaultSettings.MaximumNumberOfResults;
 
             IList<Location> locationChunk;
             List<Location> nearestLocations = new List<Location>();
@@ -52,8 +53,8 @@ namespace LocationSearch.Api.Services
             do
             {
                 locationChunk = memoryCache.GetOrAdd($"{offset}", entry => {
-                    entry.SetSlidingExpiration(TimeSpan.FromHours(double.Parse(configuration["DefaultValues:slidingExpiration"])));
-                    entry.SetSlidingExpiration(TimeSpan.FromHours(double.Parse(configuration["DefaultValues:absoluteExpiration"])));
+                    entry.SetSlidingExpiration(TimeSpan.FromHours(defaultSettings.SlidingExpiration));
+                    entry.SetAbsoluteExpiration(TimeSpan.FromHours(defaultSettings.AbsoluteExpiration));
 
                     return context.Locations.OrderBy(l => l.Address).Skip(offset).Take(limit).ToList(); 
                 });

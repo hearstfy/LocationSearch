@@ -8,9 +8,11 @@ using LocationSearch.Api.DataAccess;
 using LocationSearch.Api.Dtos;
 using LocationSearch.Api.Models;
 using LocationSearch.Api.Services;
+using LocationSearch.Api.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
 
@@ -23,17 +25,17 @@ namespace LocationSearch.UnitTests
         public async Task FindNearestLocations_ReturnsLocationsList()
         {
             var dbContext = await GetDatabaseContext();
-            var inMemorySettings = new Dictionary<string, string> {
-                    {"DefaultValues:chunkSize", "10"},
-                    {"DefaultValues:maximumNumberOfResults", "100"},
-                    {"DefaultValues:slidingExpiration", "1"},
-                    {"DefaultValues:absoluteExpiration", "2"}};
+            var settings = new DefaultSettings(){
+                AbsoluteExpiration = 2,
+                ChunkSize = 100000,
+                MaximumNumberOfResults = 100,
+                SlidingExpiration = 1
+            };
 
-            IConfiguration configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(inMemorySettings)
-                .Build();
+            var mockSettings = new Mock<IOptionsSnapshot<DefaultSettings>>(); 
+            mockSettings.Setup(o => o.Value).Returns(settings);
 
-            var service = new LocationService(dbContext, configuration, new MockCachingService());
+            var service = new LocationService(dbContext, mockSettings.Object, new MockCachingService());
             var dto = new FindLocationsRequestDto() { Latitude = 53.63764880, Longitude = 4.73995440, MaxDistance = 100, MaxResults = 100 };
             var result = service.FindNearestLocations(dto);
 

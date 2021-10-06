@@ -1,3 +1,7 @@
+# How to start the app
+ - cd LocationSearch.Api/docker 
+ - docker-compose up
+
 # General
   - Has two parts; LocationSearch.Api contains application and LocationSearch.UnitTests contain unit tests.
   - Requires MySQL with DB named roamler, table named Locations [Address(string,text,nvarchar), Latitude(decimal(10,8), Longitude(decimal(11,8)] and data in it.

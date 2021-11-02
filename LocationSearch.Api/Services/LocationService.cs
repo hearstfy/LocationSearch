@@ -24,13 +24,13 @@ namespace LocationSearch.Api.Services
             this.memoryCache = memoryCache;
 
         }
-        private double CalculateDistance(Location firstLocation, Location secondLocation)
+        private double CalculateDistance(double latitude, double longitude,Location location)
         {
-            var rlat1 = Math.PI * firstLocation.Latitude / 180;
-            var rlat2 = Math.PI * secondLocation.Latitude / 180;
-            var rlon1 = Math.PI * firstLocation.Longitude / 180;
-            var rlon2 = Math.PI * secondLocation.Longitude / 180;
-            var theta = firstLocation.Longitude - secondLocation.Longitude;
+            var rlat1 = Math.PI * latitude / 180;
+            var rlat2 = Math.PI * location.Latitude / 180;
+            var rlon1 = Math.PI * longitude / 180;
+            var rlon2 = Math.PI * location.Longitude / 180;
+            var theta = longitude - location.Longitude;
             var rtheta = Math.PI * theta / 180;
             var dist = Math.Sin(rlat1) * Math.Sin(rlat2) + Math.Cos(rlat1) * Math.Cos(rlat2) * Math.Cos(rtheta);
             dist = Math.Acos(dist);
@@ -42,7 +42,6 @@ namespace LocationSearch.Api.Services
 
         public IEnumerable<Location> FindNearestLocations(FindLocationsRequestDto locationDto)
         {
-            Location location = new() { Address = "", Latitude = (double)locationDto.Latitude, Longitude = (double)locationDto.Longitude };
             int offset = 0;
             int limit = defaultSettings.ChunkSize;
             int maximumNumberOfResults = locationDto.MaxResults ?? defaultSettings.MaximumNumberOfResults;
@@ -50,19 +49,20 @@ namespace LocationSearch.Api.Services
             IList<Location> locationChunk;
             List<Location> nearestLocations = new List<Location>();
             
+            
             do
             {
                 locationChunk = memoryCache.GetOrAdd($"{offset}", entry => {
                     entry.SetSlidingExpiration(TimeSpan.FromHours(defaultSettings.SlidingExpiration));
                     entry.SetAbsoluteExpiration(TimeSpan.FromHours(defaultSettings.AbsoluteExpiration));
-
+        
                     return context.Locations.OrderBy(l => l.Address).Skip(offset).Take(limit).ToList(); 
                 });
 
                 offset += limit;
                 for (int i = 0; i < locationChunk.Count; i++)
                 {
-                    var distance = CalculateDistance(location, locationChunk[i]);
+                    var distance = CalculateDistance((double)locationDto.Latitude, (double)locationDto.Longitude, locationChunk[i]);
                     if (distance <= (double)locationDto.MaxDistance)
                     {
                         locationChunk[i].Distance = Math.Round(distance, 2);

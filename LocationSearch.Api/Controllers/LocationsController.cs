@@ -1,7 +1,9 @@
 ﻿using LocationSearch.Api.Dtos;
 using LocationSearch.Api.Models;
 using LocationSearch.Api.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 
 namespace LocationSearch.Api.Controllers
@@ -17,9 +19,23 @@ namespace LocationSearch.Api.Controllers
         }
 
         [HttpPost]
-        public IEnumerable<Location> GetLocations([FromBody] FindLocationsRequestDto locationDto)
+        public IActionResult GetLocations([FromBody] FindLocationsRequestDto locationDto)
         {
-            return locationService.FindNearestLocations(locationDto);
+            try
+            {
+                return Ok(new FindLocationsReponseDto
+                {
+                    result = locationService.FindNearestLocations(locationDto)
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new FindLocationsReponseDto
+                {
+                    result = new List<Location>(),
+                    error = e.Message
+                });
+            }
         }
     }
 }

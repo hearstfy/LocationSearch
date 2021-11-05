@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LocationSearch.Api.Controllers
 {
@@ -19,13 +20,13 @@ namespace LocationSearch.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult GetLocations([FromBody] FindLocationsRequestDto locationDto)
+        public async Task<IActionResult> GetLocationsAsync([FromBody] FindLocationsRequestDto locationDto)
         {
             try
             {
                 return Ok(new FindLocationsReponseDto
                 {
-                    result = locationService.FindNearestLocations(locationDto)
+                    result = await locationService.FindNearestLocations((double)locationDto.Latitude, (double)locationDto.Longitude, (double)locationDto.MaxDistance, locationDto.MaxResults ?? null)
                 });
             }
             catch (Exception e)

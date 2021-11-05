@@ -3,11 +3,13 @@ using LocationSearch.Api.DataAccess;
 using LocationSearch.Api.Dtos;
 using LocationSearch.Api.Models;
 using LocationSearch.Api.Settings;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace LocationSearch.Api.Services
 {
@@ -40,11 +42,11 @@ namespace LocationSearch.Api.Services
             return dist * 1609.344;
         }
 
-        public IEnumerable<Location> FindNearestLocations(FindLocationsRequestDto locationDto)
+        public async Task<IEnumerable<Location>> FindNearestLocations(double latitude, double longitude, double maxDistance, int? maxResults)
         {
             int offset = 0;
             int limit = defaultSettings.ChunkSize;
-            int maximumNumberOfResults = locationDto.MaxResults ?? defaultSettings.MaximumNumberOfResults;
+            int maximumNumberOfResults = maxResults ?? defaultSettings.MaximumNumberOfResults;
 
             IList<Location> locationChunk;
             List<Location> nearestLocations = new List<Location>();
@@ -52,18 +54,18 @@ namespace LocationSearch.Api.Services
             
             do
             {
-                locationChunk = memoryCache.GetOrAdd($"{offset}", entry => {
+                locationChunk = await memoryCache.GetOrAddAsync<List<Location>>($"{offset}", entry => {
                     entry.SetSlidingExpiration(TimeSpan.FromHours(defaultSettings.SlidingExpiration));
                     entry.SetAbsoluteExpiration(TimeSpan.FromHours(defaultSettings.AbsoluteExpiration));
         
-                    return context.Locations.OrderBy(l => l.Address).Skip(offset).Take(limit).ToList(); 
+                    return context.Locations.OrderBy(l => l.Address).Skip(offset).Take(limit).ToListAsync(); 
                 });
 
                 offset += limit;
                 for (int i = 0; i < locationChunk.Count; i++)
                 {
-                    var distance = CalculateDistance((double)locationDto.Latitude, (double)locationDto.Longitude, locationChunk[i]);
-                    if (distance <= (double)locationDto.MaxDistance)
+                    var distance = CalculateDistance(latitude, longitude, locationChunk[i]);
+                    if (distance <= maxDistance)
                     {
                         locationChunk[i].Distance = Math.Round(distance, 2);
                         nearestLocations.Add(locationChunk[i]);
